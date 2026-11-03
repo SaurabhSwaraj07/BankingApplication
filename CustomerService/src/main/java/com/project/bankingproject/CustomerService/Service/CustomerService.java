@@ -3,6 +3,8 @@ package com.project.bankingproject.CustomerService.Service;
 import com.project.bankingproject.CustomerService.DTO.CustomerCreatedResponse;
 import com.project.bankingproject.CustomerService.DTO.CustomerRequest;
 import com.project.bankingproject.CustomerService.Enum.KycStatus;
+import com.project.bankingproject.CustomerService.Exceptions.ConflictException;
+import com.project.bankingproject.CustomerService.Exceptions.ExternalIdExistsException;
 import com.project.bankingproject.CustomerService.Mapper.CustomerMapper;
 import com.project.bankingproject.CustomerService.Model.Customer;
 import com.project.bankingproject.CustomerService.Repository.CustomerRepository;
@@ -27,7 +29,12 @@ public class CustomerService {
         String externalId = request.getExternalId();
         String fp = fingerprint.customerCreate(request.getFirstName(), request.getLastName(), request.getEmail(), request.getPhone(), request.getAddress());
         Optional<Customer> byExt = repository.findByExternalId(externalId);
-        if(byExt.isPresent() && byExt.get().getRequestFingerprint().equals(fp)) return mapper.toCreateResponse(byExt.get());
+//        if(byExt.isPresent() && byExt.get().getRequestFingerprint().equals(fp)) return mapper.toCreateResponse(byExt.get());
+
+        if(byExt.isPresent()){
+            if(byExt.get().getRequestFingerprint().equals(fp)) throw new ConflictException("User Alreaday Created Before");
+            throw new ExternalIdExistsException("External Id Occupied by another user");
+        }
 
         Customer entity =  mapper.toEntity(request);
         entity.setActive(false);
